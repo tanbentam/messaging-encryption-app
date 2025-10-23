@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng Dụng Mã Hóa Tin Nhắn - AES & QR Code</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Thư viện CryptoJS cho mã hóa AES -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Thư viện QRCode.js để tạo QR code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Thư viện HTML5-QRCode để quét QR code -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Ứng Dụng Mã Hóa Tin Nhắn</h1>
+            <p class="subtitle">Bảo mật tin nhắn với AES-256 và QR Code</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="encrypt">📝 Mã Hóa</button>
+            <button class="tab-button" data-tab="decrypt">🔓 Giải Mã</button>
+            <button class="tab-button" data-tab="scanner">📷 Quét QR</button>
+        </div>
+
+        <!-- Tab 1: Mã hóa tin nhắn -->
+        <div id="encrypt-tab" class="tab-content active">
+            <div class="section">
+                <h2>Mã Hóa Tin Nhắn</h2>
+                <div class="form-group">
+                    <label for="messageInput">📩 Tin nhắn của bạn:</label>
+                    <textarea id="messageInput" rows="5" placeholder="Nhập tin nhắn muốn mã hóa..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="encryptKey">🔑 Mật khẩu chung (8-32 ký tự):</label>
+                    <input type="password" id="encryptKey" placeholder="Nhập mật khẩu để mã hóa" maxlength="32"/>
+                    <small>⚠️ Bạn và người nhận phải biết mật khẩu này!</small>
+                </div>
+                <button id="encryptButton" class="btn-primary">🔒 Mã Hóa & Tạo QR Code</button>
+                
+                <div id="encryptResult" class="result-section" style="display: none;">
+                    <h3>✅ Mã Hóa Thành Công!</h3>
+                    <div class="encrypted-text">
+                        <label>Tin nhắn đã mã hóa:</label>
+                        <textarea id="encryptedText" readonly rows="3"></textarea>
+                        <button id="copyButton" class="btn-secondary">📋 Sao chép</button>
+                    </div>
+                    <div class="qr-container">
+                        <label>QR Code (quét để giải mã):</label>
+                        <div id="qrCodeDisplay"></div>
+                        <button id="downloadQR" class="btn-secondary">💾 Tải QR Code</button>
+                    </div>
+                    <div class="warning-box">
+                        <p>⚡ <strong>Tính năng tự hủy:</strong></p>
+                        <label>
+                            <input type="checkbox" id="selfDestruct" />
+                            Xóa tin nhắn sau khi hiển thị QR Code (5 giây)
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Giải mã thủ công -->
+        <div id="decrypt-tab" class="tab-content">
+            <div class="section">
+                <h2>Giải Mã Tin Nhắn</h2>
+                <div class="form-group">
+                    <label for="encryptedInput">🔒 Tin nhắn đã mã hóa:</label>
+                    <textarea id="encryptedInput" rows="3" placeholder="Dán tin nhắn đã mã hóa vào đây..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="decryptKey">🔑 Mật khẩu chung:</label>
+                    <input type="password" id="decryptKey" placeholder="Nhập mật khẩu để giải mã"/>
+                </div>
+                <button id="decryptButton" class="btn-primary">🔓 Giải Mã</button>
+                
+                <div id="decryptResult" class="result-section" style="display: none;">
+                    <h3>✅ Giải Mã Thành Công!</h3>
+                    <div class="decrypted-message">
+                        <label>Tin nhắn gốc:</label>
+                        <div id="decryptedMessage" class="message-box"></div>
+                    </div>
+                </div>
+                
+                <div id="decryptError" class="error-section" style="display: none;">
+                    <h3>❌ Giải Mã Thất Bại!</h3>
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Quét QR Code -->
+        <div id="scanner-tab" class="tab-content">
+            <div class="section">
+                <h2>Quét QR Code</h2>
+                <p>Sử dụng camera để quét QR Code chứa tin nhắn đã mã hóa</p>
+                
+                <div id="qr-reader" style="width: 100%;"></div>
+                <button id="startScanButton" class="btn-primary">📷 Bắt Đầu Quét</button>
+                <button id="stopScanButton" class="btn-secondary" style="display: none;">⏹️ Dừng Quét</button>
+                
+                <div id="scanResult" class="result-section" style="display: none;">
+                    <h3>📱 QR Code Đã Quét!</h3>
+                    <div class="form-group">
+                        <label>Tin nhắn đã mã hóa:</label>
+                        <textarea id="scannedData" readonly rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="scanDecryptKey">🔑 Nhập mật khẩu để giải mã:</label>
+                        <input type="password" id="scanDecryptKey" placeholder="Mật khẩu"/>
+                    </div>
+                    <button id="decryptScannedButton" class="btn-primary">🔓 Giải Mã</button>
+                    
+                    <div id="scannedDecryptResult" class="decrypted-message" style="display: none;">
+                        <label>Tin nhắn gốc:</label>
+                        <div id="scannedDecryptedMessage" class="message-box"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>🔒 Mã hóa AES-256 | 📱 QR Code | 🛡️ Bảo mật hoàn toàn trên trình duyệt</p>
+            <p class="note">⚠️ Không lưu trữ dữ liệu trên server - Mọi xử lý đều ở client-side</p>
+        </footer>
+    </div>
+
+    <!-- Load các file JavaScript -->
+    <script src="js/encryption.js"></script>
+    <script src="js/qrcode.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
