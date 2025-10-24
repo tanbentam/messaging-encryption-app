@@ -24,6 +24,8 @@
             <button class="tab-button active" data-tab="encrypt">📝 Mã Hóa</button>
             <button class="tab-button" data-tab="decrypt">🔓 Giải Mã</button>
             <button class="tab-button" data-tab="scanner">📷 Quét QR</button>
+            <button class="tab-button" data-tab="history">📜 Lịch Sử</button>
+            <button class="tab-button" data-tab="settings">⚙️ Cài Đặt</button>
         </div>
 
         <!-- Tab 1: Mã hóa tin nhắn -->
@@ -36,8 +38,24 @@
                 </div>
                 <div class="form-group">
                     <label for="encryptKey">🔑 Mật khẩu chung (8-32 ký tự):</label>
-                    <input type="password" id="encryptKey" placeholder="Nhập mật khẩu để mã hóa" maxlength="32"/>
+                    <div class="password-input-group">
+                        <input type="password" id="encryptKey" placeholder="Nhập mật khẩu để mã hóa" maxlength="32"/>
+                        <button type="button" id="toggleEncryptPassword" class="btn-icon" title="Hiện/Ẩn mật khẩu">👁️</button>
+                        <button type="button" id="generatePassword" class="btn-icon" title="Tạo mật khẩu ngẫu nhiên">🎲</button>
+                    </div>
+                    <div id="passwordStrength" class="password-strength"></div>
                     <small>⚠️ Bạn và người nhận phải biết mật khẩu này!</small>
+                </div>
+                <div class="form-group">
+                    <label for="expiryTime">⏱️ Thời gian hết hạn tin nhắn:</label>
+                    <select id="expiryTime">
+                        <option value="0">Không giới hạn</option>
+                        <option value="300">5 phút</option>
+                        <option value="1800">30 phút</option>
+                        <option value="3600">1 giờ</option>
+                        <option value="86400">24 giờ</option>
+                        <option value="604800">7 ngày</option>
+                    </select>
                 </div>
                 <button id="encryptButton" class="btn-primary">🔒 Mã Hóa & Tạo QR Code</button>
                 
@@ -46,7 +64,11 @@
                     <div class="encrypted-text">
                         <label>Tin nhắn đã mã hóa:</label>
                         <textarea id="encryptedText" readonly rows="3"></textarea>
-                        <button id="copyButton" class="btn-secondary">📋 Sao chép</button>
+                        <div class="button-group">
+                            <button id="copyButton" class="btn-secondary">📋 Sao chép</button>
+                            <button id="shareButton" class="btn-secondary">📤 Chia sẻ Link</button>
+                            <button id="saveHistory" class="btn-secondary">💾 Lưu vào Lịch Sử</button>
+                        </div>
                     </div>
                     <div class="qr-container">
                         <label>QR Code (quét để giải mã):</label>
@@ -123,10 +145,150 @@
             </div>
         </div>
 
-        <footer>
-            <p>🔒 Mã hóa AES-256 | 📱 QR Code | 🛡️ Bảo mật hoàn toàn trên trình duyệt</p>
-            <p class="note">⚠️ Không lưu trữ dữ liệu trên server - Mọi xử lý đều ở client-side</p>
-        </footer>
+        <!-- Tab 4: Lịch sử -->
+        <div id="history-tab" class="tab-content">
+            <div class="section">
+                <h2>Lịch Sử Tin Nhắn</h2>
+                <div class="history-controls">
+                    <button id="clearHistory" class="btn-secondary">🗑️ Xóa Tất Cả</button>
+                    <button id="exportHistory" class="btn-secondary">📥 Xuất File</button>
+                </div>
+                <div id="historyList" class="history-list">
+                    <p class="empty-state">📭 Chưa có tin nhắn nào trong lịch sử</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Cài đặt -->
+        <div id="settings-tab" class="tab-content">
+            <div class="section">
+                <h2>Cài Đặt Ứng Dụng</h2>
+                
+                <div class="settings-group">
+                    <h3>🎨 Giao Diện</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="darkMode" />
+                            <span>🌙 Chế độ tối (Dark Mode)</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Chủ đề màu sắc:</label>
+                        <select id="themeColor">
+                            <option value="purple">💜 Tím (Mặc định)</option>
+                            <option value="blue">💙 Xanh dương</option>
+                            <option value="green">💚 Xanh lá</option>
+                            <option value="red">❤️ Đỏ</option>
+                            <option value="orange">🧡 Cam</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>🔐 Bảo Mật</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="autoLock" />
+                            <span>🔒 Tự động khóa sau khi không sử dụng</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="clearClipboard" />
+                            <span>🧹 Tự động xóa clipboard sau 30 giây</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Mã hóa mặc định:</label>
+                        <select id="defaultEncryption">
+                            <option value="aes">AES-256 (Khuyến nghị)</option>
+                            <option value="tripledes">TripleDES</option>
+                            <option value="rabbit">Rabbit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>📱 QR Code</h3>
+                    <div class="setting-item">
+                        <label>Kích thước QR Code:</label>
+                        <select id="qrSize">
+                            <option value="128">Nhỏ (128x128)</option>
+                            <option value="256" selected>Trung bình (256x256)</option>
+                            <option value="512">Lớn (512x512)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>Màu QR Code:</label>
+                        <div class="color-picker-group">
+                            <input type="color" id="qrColorDark" value="#000000" />
+                            <span>Màu tối</span>
+                        </div>
+                        <div class="color-picker-group">
+                            <input type="color" id="qrColorLight" value="#ffffff" />
+                            <span>Màu sáng</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>🔔 Thông Báo</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="soundEffects" checked />
+                            <span>🔊 Hiệu ứng âm thanh</span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="notifications" />
+                            <span>🔔 Thông báo trình duyệt</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>📊 Thống Kê</h3>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <span class="stat-label">Tin nhắn đã mã hóa:</span>
+                            <span class="stat-value" id="totalEncrypted">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Tin nhắn đã giải mã:</span>
+                            <span class="stat-value" id="totalDecrypted">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">QR Code đã tạo:</span>
+                            <span class="stat-value" id="totalQR">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="resetSettings" class="btn-secondary">🔄 Đặt Lại Cài Đặt</button>
+                <button id="saveSettings" class="btn-primary">💾 Lưu Cài Đặt</button>
+            </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div id="shareModal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2>📤 Chia Sẻ Tin Nhắn</h2>
+                <div class="share-options">
+                    <p>Link chia sẻ (tin nhắn sẽ được giải mã tự động khi mở link):</p>
+                    <div class="share-link-container">
+                        <input type="text" id="shareLink" readonly />
+                        <button id="copyShareLink" class="btn-secondary">📋 Sao chép</button>
+                    </div>
+                    <p class="warning-text">⚠️ Chú ý: Link này chứa mật khẩu, chỉ chia sẻ qua kênh an toàn!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+
     </div>
 
     <!-- Load các file JavaScript -->

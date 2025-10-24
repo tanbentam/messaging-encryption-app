@@ -4,22 +4,29 @@
  * Tạo QR Code từ tin nhắn đã mã hóa
  * @param {string} encryptedMessage - Tin nhắn đã mã hóa
  * @param {HTMLElement} container - Container để hiển thị QR code
+ * @param {object} options - Tùy chọn cho QR code
  * @returns {object} - QR Code instance
  */
-function generateQRCode(encryptedMessage, container) {
+function generateQRCode(encryptedMessage, container, options = {}) {
     try {
         // Xóa QR code cũ nếu có
         container.innerHTML = '';
 
-        // Tạo QR code mới
-        const qrcode = new QRCode(container, {
+        // Default options
+        const defaultOptions = {
             text: encryptedMessage,
             width: 256,
             height: 256,
             colorDark: "#000000",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H, // High error correction
-        });
+        };
+
+        // Merge with custom options
+        const qrOptions = { ...defaultOptions, ...options };
+
+        // Tạo QR code mới
+        const qrcode = new QRCode(container, qrOptions);
 
         return qrcode;
     } catch (error) {
